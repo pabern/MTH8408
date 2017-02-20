@@ -1,7 +1,7 @@
 module transformation
 export f1
 
-function f1(caFront, caRear, WCRot, wheelCarrier, push, chassis, rockerAxis, shockA, shockB)
+function f1(caFront, caRear, WCRot, wheelCarrier, push, chassis, rockerAxis, shockA, shockB,travel)
   
 # Identify point of rotation of wheelCarrier around caAxis
 WCRot = findclosepoint(caFront, caRear, wheelCarrier)
