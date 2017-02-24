@@ -19,15 +19,7 @@ function findclosepoint(P1, P2, P3)
 end
 
 function translate3d(P,T)
-
-  if size(P,1) > 1
-    point = zeros(size(P,1),3)
-    for i = 1:1:size(P,1)
-      point[i,:] = P[i,:] - T
-    end
-  else
-    point = P-T
-  end
+  point = diagm(T)*ones(size(P))
   return point
 end
 

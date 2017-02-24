@@ -1,8 +1,10 @@
 module transformation
+include("./MyModule.jl")
+using MyModule
 export f1
 
-function f1(caFront, caRear, WCRot, wheelCarrier, push, chassis, rockerAxis, shockA, shockB,travel)
-  
+function f1(caFront, caRear, wheelCarrier, push, chassis, rockerAxis, shockA, shockB,travel)
+
 # Identify point of rotation of wheelCarrier around caAxis
 WCRot = findclosepoint(caFront, caRear, wheelCarrier)
 
@@ -41,14 +43,12 @@ for i = 1:1:length(rotationTravel)
   pointWC[i,:] = rotate3d(pointListWC[4:4,:], pointListWC[1:1,:], pointListWC[2:2,:], rotationTravel[i])
   pointWC[i,:] = translate3d(pointWC[i:i,:], -pointList[3:3,:])
 end
-  
+
   P = [pointList;
         pointWC]
-  
+
   return P
-  
+
 end # End of function
 
 end # End of module
-
-

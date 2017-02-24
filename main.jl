@@ -20,7 +20,7 @@ shockB        = [2210 30 575]  #8
 travel = 51                    #9
 springRate = 61.3              #10
 
-P = f1(caFront,caRear,wheelCarrier,push,chassis,rockerAxis,shockA,shockB,travel)
+P = f1(caFront, caRear, wheelCarrier, push, chassis, rockerAxis, shockA, shockB, travel)
 
 pointList = P[1:9,:]
 pointWC = P[10:end,:]
