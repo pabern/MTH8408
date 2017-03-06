@@ -20,7 +20,7 @@ pointList = [caFront;     # 1
             shockB]       # 9
 
 # Translation of Origin (0 0 0) to chassis
-pointList = translate3d(pointList,pointList[6,:])
+pointList = translate3d(pointList,pointList[6:6,:])
 
 # Z axis rotation to eliminate θ in spherical coordinate
 t = cart2spher(pointList[7,:])
@@ -33,7 +33,7 @@ pointList = rotate3d(pointList,[0 0 0], [0 1 0], angleRot)
 
 # Calculate the points of the wheel carrier after its rotation according to the desired travel
 # Translation to the origin in order for the rotation to function correctly
-pointListWC = translate3d(pointList,pointList[3,:])
+pointListWC = translate3d(pointList,pointList[3:3,:])
 
 rotationTravel = atan(travel/(norm(WCRot-wheelCarrier)))
 rotationTravel = linspace(-rotationTravel,rotationTravel,200)
