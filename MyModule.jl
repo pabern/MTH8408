@@ -19,7 +19,9 @@ function findclosepoint(P1, P2, P3)
 end
 
 function translate3d(P,T)
-  point = diagm(T)*ones(size(P))
+  # P : Liste de n point : size(P) = (n,3)
+  n = size(P,1)
+  point = P - ones(n)*T'
   return point
 end
 
@@ -48,8 +50,7 @@ function cart2spher(P)
 end
 
 function rotate3d(P, Q1, Q2, t)
-  u = (Q2 - Q1)/norm(Q2 - Q1)
-
+  u = unitvector(Q1, Q2)
   c = cos(t)
   s = sin(t)
   c1 = 1-c
@@ -69,11 +70,6 @@ function rotate3d(P, Q1, Q2, t)
   (uxz*c1)-(uy*s) (uyz*c1)+(ux*s) c+(uz2*c1)]
 
   point = P*R
-  for i = 1:1:length(point)
-    if abs(point[i]) < 1e-10
-      point[i] = 0
-    end
-  end
   return point
 end
 
