@@ -2,6 +2,7 @@ workspace()
 include("./MyModule.jl")
 using MyModule
 include("./f.jl")
+using ForwardDiff
 
 n = 200
 caFront       = [2260 220 290] #1
@@ -11,7 +12,7 @@ push          = [2210 245 590] #4
 chassis       = [2210 200 535] #5
 rockerAxis    = [2215 200 535] #6
 shockA        = [2110 200 595] #7
-shockB        = [2210 30 575]  #8
+shockB        = [2210 30  575]  #8
 
 travel = 51                    #9
 springRate = 61.3              #10
@@ -52,8 +53,6 @@ cfg = GradientConfig(inputs)
 gradient!(results, f, inputs, cfg)
 
 =#
-
-using ForwardDiff
 
 out = zeros(n-1,26)
 cfg = ForwardDiff.JacobianConfig(x)
