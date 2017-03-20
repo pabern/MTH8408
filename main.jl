@@ -1,5 +1,5 @@
 workspace()
-using Plots
+#using Plots
 include("./MyModule.jl")
 using MyModule
 include("./f.jl")
@@ -32,26 +32,9 @@ x[26] = springRate
 
 (z,wheelRate) = WZ(x)
 
-plot(z,wheelRate)
-gui()
+#plot(z,wheelRate)
+#gui()
 
-<<<<<<< HEAD
-
-using ReverseDiff: GradientTape, GradientConfig, gradient, gradient!, compile_gradient
-
-
-inputs = x
-results = similar(x)
-cfg = GradientConfig(inputs)
-gradient!(results, f, inputs, cfg)
-
-=#
-
-out = zeros(n-1,26)
-=======
-using ForwardDiff
-
->>>>>>> origin/TestForwardDiff
 cfg = ForwardDiff.JacobianConfig(x)
 Jf = zeros(n-1,26)
 ForwardDiff.jacobian!(Jf, F, x, cfg)
