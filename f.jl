@@ -43,13 +43,15 @@ function f1(x,n)
   rotationTravel = atan(travel/(norm(WCRot-wheelCarrier)))
   #rotationTravel = linspace(-rotationTravel,rotationTravel,200)
   rotationTravel = -rotationTravel *ones(1,n) + (2*rotationTravel)/n * (0:(n-1))'
-
+  #=
   pointWC = zeros(n,3)
-  for i = 1:1:length(rotationTravel)
-    pointWC[i,:] = rotate3d(pointListWC[4:4,:], pointListWC[1:1,:], pointListWC[2:2,:], rotationTravel[i])
-    pointWC[i,:] = translate3d(pointWC[i:i,:], -pointList[3:3,:]')
+  for i = 1:1:n
+    pointWC[i:i,:] = rotate3d(pointListWC[4:4,:], pointListWC[1:1,:], pointListWC[2:2,:], rotationTravel[i])
+    pointWC[i:i,:] = translate3d(pointWC[i:i,:], -pointList[3:3,:]')
   end
-
+  =#
+  pointWCtemp = rotate3d_tlist(pointListWC[4:4,:], pointListWC[1:1,:], pointListWC[2:2,:], rotationTravel')
+  pointWC = translate3d(pointWCtemp, -pointList[3:3,:]')
 
   return (pointWC, pointList)
 end
@@ -65,7 +67,10 @@ function f2(pointWC, pointList)
     rockerAxis    = pointList[7:7,:]
     shockA        = pointList[8:8,:]
     shockB        = pointList[9:9,:]
+
   # Sherical coordinates of wheel carrier positions
+  sphericWC = cart2spher_list(pointWC)
+  #=
   rWC = zeros(200,1)
   θWC = zeros(200,1)
   ϕWC = zeros(200,1)
@@ -75,13 +80,12 @@ function f2(pointWC, pointList)
     θWC[i] = t[2]
     ϕWC[i] = t[3]
   end
-
+=#
+  rWC = sphericWC[:,1]
+  θWC = sphericWC[:,2]
+  ϕWC = sphericWC[:,3]
   # Four bar linkage length of members
-  a = zeros(1,4)
-  a[1] = norm(WCRot-wheelCarrier)
-  a[2] = norm(push-wheelCarrier)
-  a[3] = norm(push-chassis)
-  a[4] = norm(chassis-WCRot)
+  a = [norm(WCRot-wheelCarrier) norm(push-wheelCarrier) norm(push-chassis) norm(chassis-WCRot)]
 
   # Four bar linkage equation
   A = cos(θWC).*sin(ϕWC)
@@ -98,17 +102,16 @@ function f2(pointWC, pointList)
   pushIni = rotate3d(push,chassis,[0 1 0],ϕIni)
   shockAIni = rotate3d(shockA,chassis,[0 1 0],ϕIni)
 
-  shockA = zeros(200,3)
-  for i = 1:1:size(ϕPush,1)
-      shockA[i,:] = rotate3d(shockAIni,chassis,[0 -1 0],ϕPush[i])
-  end
+  shockA = rotate3d_tlist(shockAIni,chassis,[0 -1 0],ϕPush)
 
   # Lenght of shock
-  L = zeros(n,1)
   L = sqrt((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
 
   # Wheel travel
   w1 = pointWC[1:end-1,3]
+  return (pointWC,w1,L,wheelCarrier[3])
+end
+function f3(pointWC,w1,L)
   w2 = pointWC[2:end,3]
   wheelTravel = abs(w2-w1)
 
@@ -119,16 +122,30 @@ function f2(pointWC, pointList)
 
   motionRatio = wheelTravel./springTravel
   wheelRate = springRate./(motionRatio.^2)
-
+  return wheelRate
+end
+function f4(w1,wheelCarrierz)
   # Wheel rate plot
-  x = w1-wheelCarrier[3]
+  z = w1-wheelCarrierz
   # plot(x,wheelRate)
-  return (x, wheelRate)
+  return (z)
 end
 
-function f(x)
+function WZ(x)
   n = 200
   (pointWC, pointList) = f1(x,n)
-  (z, wheelRate) = f2(pointWC, pointList)
-  return (wheelRate)
+  (pointWC,w1,L,wheelCarrierz) = f2(pointWC, pointList)
+  W = f3(pointWC,w1,L) #wheelRate
+  Z = f4(w1,wheelCarrierz) #[Z_min,Z_max]
+  return (Z,W)
+end
+
+function F(x)
+  n = 200
+  (pointWC, pointList) = f1(x,n)
+  (pointWC,w1,L,wheelCarrierz) = f2(pointWC, pointList)
+  W = f3(pointWC,w1,L) #wheelRate
+  Z = f4(w1,wheelCarrierz) #[Z_min,Z_max]
+  F = W - (0.2 * Z + 28)
+  return F
 end
