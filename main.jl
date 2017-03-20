@@ -1,4 +1,5 @@
 workspace()
+using Plots
 include("./MyModule.jl")
 using MyModule
 include("./f.jl")
@@ -28,33 +29,15 @@ x[22:24] = shockB
 x[25] = travel
 x[26] = springRate
 
-wheelRate = f(x)
-#=
-out = zeros(26,n-1)
-cfg = ForwardDiff.JacobianConfig(x)
-ForwardDiff.jacobian!(out, f, x, cfg)
+(z,wheelRate) = WZ(x)
 
-
-
-using Plots
-(z, wheelRate) = f(x)
 plot(z,wheelRate)
-plot!(z,0.2*z+28)
 gui()
-
-
-using ReverseDiff: GradientTape, GradientConfig, gradient, gradient!, compile_gradient
-
-
-inputs = x
-results = similar(x)
-cfg = GradientConfig(inputs)
-gradient!(results, f, inputs, cfg)
-
-=#
 
 using ForwardDiff
 
-out = zeros(n-1,26)
 cfg = ForwardDiff.JacobianConfig(x)
-ForwardDiff.jacobian!(out, f, x, cfg) # Erreur ici
+Jf = zeros(n-1,26)
+ForwardDiff.jacobian!(Jf, F, x, cfg)
+
+∇c = Jf'*F(x)
