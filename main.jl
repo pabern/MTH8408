@@ -4,7 +4,7 @@ include("./MyModule.jl")
 using MyModule
 include("./f.jl")
 using ForwardDiff
-
+# X0 = x
 n = 200
 caFront       = [2260 220 290] #1
 caRear        = [1890 250 290] #2
@@ -30,7 +30,7 @@ x[22:24] = shockB
 x[25] = travel
 x[26] = springRate
 
-(z,wheelRate) = WZ(x)
+# (z,wheelRate) = WZ(x)
 
 #plot(z,wheelRate)
 #gui()
@@ -40,3 +40,26 @@ Jf = zeros(n-1,26)
 ForwardDiff.jacobian!(Jf, F, x, cfg)
 
 ∇c = Jf'*F(x)
+
+k = 0
+a = 0.5
+while k < 10 # stopping conditions
+
+  d = -∇c
+  t = 1
+  x2 = x = x + (t*d)
+  while F(x2) > F(x)+ (a*t*∇c'*d)
+    t = t/2
+    x2 = x = x + (t*d)
+  end #end Armijo while
+
+  x = x + (t*d)
+  cfg = ForwardDiff.JacobianConfig(x)
+  Jf = zeros(n-1,26)
+  ForwardDiff.jacobian!(Jf, F, x, cfg)
+
+  ∇c = Jf'*F(x)
+
+  k += 1 # Nest iteration
+
+end # end while
