@@ -30,7 +30,11 @@ x[22:24] = shockB
 x[25] = travel
 x[26] = springRate
 
-# (z,wheelRate) = WZ(x)
+(z,wheelRate,check) = WZ(x)
+
+if check == true
+  error("Le point de départ n'est pas valide !")
+end
 
 #plot(z,wheelRate)
 #gui()
@@ -47,11 +51,22 @@ while k < 10 # stopping conditions
 
   d = -∇c
   t = 1
-  x2 = x = x + (t*d)
-  while F(x2) > F(x)+ (a*t*∇c'*d)
-    t = t/2
-    x2 = x = x + (t*d)
-  end #end Armijo while
+  check = false
+  checkF2 = true
+  while check == true || checkF2 == true
+    x2 = x + (t*d)
+    (z,wheelRate,check) = WZ(x2)
+    if check == true
+      t = t/2
+      continue
+    end
+    F2 = F(x2)
+    F1 = F(x)
+    if F2 > F1+ (a*t*∇c'*d)
+      t = t/2
+      continue
+    end
+  end
 
   x = x + (t*d)
   cfg = ForwardDiff.JacobianConfig(x)
