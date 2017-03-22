@@ -62,12 +62,11 @@ while k < 1 # stopping conditions
     Obj2 = 0.5 * norm(F(x2)) # Valeur de la fonction objectif
     Obj1 = 0.5 * norm(F(x))
     ObjArmi = Obj1 + (a*t*(grad)'*d)
-    if float(Obj2) > float(ObjArmi)
+    if Obj2 > ObjArmi[1]
       t = t/2
       continue
     end
   end
-
   x = x + (t*d)
   cfg = ForwardDiff.JacobianConfig(x)
   Jf = zeros(n-1,26)

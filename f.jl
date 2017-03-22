@@ -93,7 +93,7 @@ function f2(pointWC, pointList)
   C = (rWC./(2*a[3])) + (((a[3].^2)-(a[2].^2))./(2*rWC.*a[3]))
   delta = A.^2 + B.^2 - C.^2
 
-  if any(d->d< 0 ,delta)
+  if any(d->d < 0 ,delta)
     check = true
     return (1,1,1,1,check)
   else
@@ -149,8 +149,6 @@ function WZ(x)
     Z = f4(w1,wheelCarrierz) #[Z_min,Z_max]
     return (Z,W,check)
   end
-
-
 end
 
 function F(x)
