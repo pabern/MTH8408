@@ -44,36 +44,43 @@ Jf = zeros(n-1,26)
 ForwardDiff.jacobian!(Jf, F, x, cfg)
 
 grad = Jf'*F(x)
+gradNorm0 = norm(grad)
+gradNorm = gradNorm0
+fk = 0.5 * norm(F(x))# Valeur de la fonction en x_0
 
 k = 0
-a = 0.5
-while k < 1 # stopping conditions
-
+a = 10e-4
+while k < 20 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
   d = -grad
+  slope = dot(grad,d) # Valeur de la descente
   t = 1
   check = true
-  while check == true
+  while check == true # On valide si la fonction est réalisable
     x2 = x + (t*d)
     (z,wheelRate,check) = WZ(x2)
     if check == true
-      t = t/2
+      t /= 1.5
       continue
     end
-    Obj2 = 0.5 * norm(F(x2)) # Valeur de la fonction objectif
-    Obj1 = 0.5 * norm(F(x))
-    ObjArmi = Obj1 + (a*t*(grad)'*d)
-    if Obj2 > ObjArmi[1]
-      t = t/2
+    if 0.5 * norm(F(x2)) > fk + (a*t*slope)
+      t /= 1.5
+      check = true
       continue
     end
-  end
-  x = x + (t*d)
+  end # End While check == true
+
+  x += (t*d)
   cfg = ForwardDiff.JacobianConfig(x)
   Jf = zeros(n-1,26)
   ForwardDiff.jacobian!(Jf, F, x, cfg)
 
   grad = Jf'*F(x)
-
+  gradNorm = norm(grad)
+  fk = 0.5 * norm(F(x))
   k += 1 # Next iteration
+  @printf "%2d" k
+  @printf "%9.2e" fk
+  @printf "%7.1e" gradNorm
+  @printf "%7.1e\n" t
 
 end # end while
