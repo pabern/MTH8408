@@ -43,26 +43,26 @@ cfg = ForwardDiff.JacobianConfig(x)
 Jf = zeros(n-1,26)
 ForwardDiff.jacobian!(Jf, F, x, cfg)
 
-∇c = Jf'*F(x)
+grad = Jf'*F(x)
 
 k = 0
 a = 0.5
-while k < 10 # stopping conditions
+while k < 1 # stopping conditions
 
-  d = -∇c
+  d = -grad
   t = 1
-  check = false
-  checkF2 = true
-  while check == true || checkF2 == true
+  check = true
+  while check == true
     x2 = x + (t*d)
     (z,wheelRate,check) = WZ(x2)
     if check == true
       t = t/2
       continue
     end
-    F2 = F(x2)
-    F1 = F(x)
-    if F2 > F1+ (a*t*∇c'*d)
+    Obj2 = 0.5 * norm(F(x2)) # Valeur de la fonction objectif
+    Obj1 = 0.5 * norm(F(x))
+    ObjArmi = Obj1 + (a*t*(grad)'*d)
+    if float(Obj2) > float(ObjArmi)
       t = t/2
       continue
     end
@@ -73,8 +73,8 @@ while k < 10 # stopping conditions
   Jf = zeros(n-1,26)
   ForwardDiff.jacobian!(Jf, F, x, cfg)
 
-  ∇c = Jf'*F(x)
+  grad = Jf'*F(x)
 
-  k += 1 # Nest iteration
+  k += 1 # Next iteration
 
 end # end while

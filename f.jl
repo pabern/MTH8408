@@ -142,9 +142,15 @@ function WZ(x)
   n = 200
   (pointWC, pointList) = f1(x,n)
   (pointWC,w1,L,wheelCarrierz,check) = f2(pointWC, pointList)
-  W = f3(pointWC,w1,L) #wheelRate
-  Z = f4(w1,wheelCarrierz) #[Z_min,Z_max]
-  return (Z,W,check)
+  if check == true
+    return (1,1,check)
+  else
+    W = f3(pointWC,w1,L) #wheelRate
+    Z = f4(w1,wheelCarrierz) #[Z_min,Z_max]
+    return (Z,W,check)
+  end
+
+
 end
 
 function F(x)
