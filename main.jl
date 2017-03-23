@@ -47,10 +47,11 @@ grad = Jf'*F(x)
 gradNorm0 = norm(grad)
 gradNorm = gradNorm0
 fk = 0.5 * norm(F(x))# Valeur de la fonction en x_0
+f0 = fk
 
 k = 0
 a = 10e-4
-while k < 20 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
+while k < 200 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
   d = -grad
   slope = dot(grad,d) # Valeur de la descente
   t = 1
@@ -78,9 +79,9 @@ while k < 20 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
   gradNorm = norm(grad)
   fk = 0.5 * norm(F(x))
   k += 1 # Next iteration
-  @printf "%2d" k
-  @printf "%9.2e" fk
-  @printf "%7.1e" gradNorm
+  @printf "%2d " k
+  @printf "%9.2e " fk
+  @printf "%7.1e " gradNorm
   @printf "%7.1e\n" t
 
 end # end while

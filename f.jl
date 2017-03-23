@@ -88,9 +88,9 @@ function f2(pointWC, pointList)
   a = [norm(WCRot-wheelCarrier) norm(push-wheelCarrier) norm(push-chassis) norm(chassis-WCRot)]
 
   # Four bar linkage equation
-  A = cos(θWC).*sin(ϕWC)
+  A = sin(θWC).*sin(ϕWC)
   B = cos(ϕWC)
-  C = (rWC./(2*a[3])) + (((a[3].^2)-(a[2].^2))./(2*rWC.*a[3]))
+  C = (rWC.^2 + a[3]^2 - a[2]^2)./(2*rWC*a[3])
   delta = A.^2 + B.^2 - C.^2
 
   if any(d->d < 0 ,delta)
