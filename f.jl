@@ -1,3 +1,17 @@
+function plot_pointList(pointList)
+  n = size(pointList,1)
+  xx = reshape(pointList[:,[1]],n)
+  yy = reshape(pointList[:,[2]],n)
+  zz = reshape(pointList[:,[3]],n)
+  figure()
+  plot3D(xx,yy,zz)
+  scatter3D(xx,yy,zz)
+  xlabel("X")
+  ylabel("Y")
+  zlabel("Z")
+end
+
+
 function f1(x,n)
   caFront       = x[1:3]' #1
   caRear        = x[4:6]' #2
@@ -24,17 +38,23 @@ function f1(x,n)
               shockA;       # 8
               shockB]       # 9
 
+#  plot_pointList(pointList)
+
   # Translation of Origin (0 0 0) to chassis
   pointList = translate3d(pointList,pointList[6,:])
+#  plot_pointList(pointList)
 
   # Z axis rotation to eliminate θ in spherical coordinate
   t = cart2spher(pointList[7,:])
   angleRot = (π/2) - t[2]
   pointList = rotate3d(pointList,[0 0 0], [0 0 1], angleRot)
+#  plot_pointList(pointList)
+
   # Y axis rotation to only leave ϕ as a variable in spherical coordinate
   t = cart2spher(pointList[7,:])
   angleRot = (π/2) - t[3]
   pointList = rotate3d(pointList,[0 0 0], [0 1 0], angleRot)
+#  plot_pointList(pointList)
 
   # Calculate the points of the wheel carrier after its rotation according to the desired travel
   # Translation to the origin in order for the rotation to function correctly

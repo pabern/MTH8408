@@ -1,5 +1,5 @@
 workspace()
-#using Plots
+using PyPlot
 include("./MyModule.jl")
 using MyModule
 include("./f.jl")
@@ -9,11 +9,11 @@ n = 200
 caFront       = [2260 220 290] #1
 caRear        = [1890 250 290] #2
 wheelCarrier  = [2110 520 320] #3
-push          = [2210 245 590] #4
-chassis       = [2210 200 535] #5
-rockerAxis    = [2215 200 535] #6
+push          = [2110 245 600] #4
+chassis       = [2110 200 535] #5
+rockerAxis    = [2115 200 535] #6
 shockA        = [2110 200 595] #7
-shockB        = [2210 30  575]  #8
+shockB        = [2110 30  575]  #8
 
 travel = 51                    #9
 springRate = 61.3              #10
@@ -29,6 +29,18 @@ x[19:21] = shockA
 x[22:24] = shockB
 x[25] = travel
 x[26] = springRate
+#=
+pointList = [caFront;     # 1
+            caRear;       # 2
+            wheelCarrier; # 4
+            push;         # 5
+            chassis;      # 6
+            rockerAxis;   # 7
+            shockA;       # 8
+            shockB]       # 9
+
+plot_pointList(pointList)
+=#
 
 (z,wheelRate,check) = WZ(x)
 
