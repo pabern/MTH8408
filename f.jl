@@ -88,29 +88,36 @@ function f2(pointWC, pointList)
   a = [norm(WCRot-wheelCarrier) norm(push-wheelCarrier) norm(push-chassis) norm(chassis-WCRot)]
 
   # Four bar linkage equation
-  A = cos(θWC).*sin(ϕWC)
+  A = sin(θWC).*sin(ϕWC)
   B = cos(ϕWC)
-  C = (rWC./(2*a[3])) + (((a[3].^2)-(a[2].^2))./(2*rWC.*a[3]))
+  C = (rWC.^2 + a[3]^2 - a[2]^2)./(2*rWC*a[3])
   delta = A.^2 + B.^2 - C.^2
 
-  ϕPush = 2*atan((A-sqrt(delta))./(B+C))
+  if any(d->d < 0 ,delta)
+    check = true
+    return (1,1,1,1,check)
+  else
+    check = false
+    ϕPush = 2*atan((A-sqrt(delta))./(B+C))
 
-  t = cart2spher(push)
-  ϕIni = t[3]
+    t = cart2spher(push)
+    ϕIni = t[3]
 
-  # Rocker position after rotation
-  pushIni = rotate3d(push,chassis,[0 1 0],ϕIni)
-  shockAIni = rotate3d(shockA,chassis,[0 1 0],ϕIni)
+    # Rocker position after rotation
+    pushIni = rotate3d(push,chassis,[0 1 0],ϕIni)
+    shockAIni = rotate3d(shockA,chassis,[0 1 0],ϕIni)
 
-  shockA = rotate3d_tlist(shockAIni,chassis,[0 -1 0],ϕPush)
+    shockA = rotate3d_tlist(shockAIni,chassis,[0 -1 0],ϕPush)
 
-  # Lenght of shock
-  L = sqrt((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
+    # Lenght of shock
+    L = sqrt((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
 
-  # Wheel travel
-  w1 = pointWC[1:end-1,3]
-  return (pointWC,w1,L,wheelCarrier[3])
+    # Wheel travel
+    w1 = pointWC[1:end-1,3]
+    return (pointWC,w1,L,wheelCarrier[3],check)
+  end
 end
+
 function f3(pointWC,w1,L)
   w2 = pointWC[2:end,3]
   wheelTravel = abs(w2-w1)
@@ -134,16 +141,20 @@ end
 function WZ(x)
   n = 200
   (pointWC, pointList) = f1(x,n)
-  (pointWC,w1,L,wheelCarrierz) = f2(pointWC, pointList)
-  W = f3(pointWC,w1,L) #wheelRate
-  Z = f4(w1,wheelCarrierz) #[Z_min,Z_max]
-  return (Z,W)
+  (pointWC,w1,L,wheelCarrierz,check) = f2(pointWC, pointList)
+  if check == true
+    return (1,1,check)
+  else
+    W = f3(pointWC,w1,L) #wheelRate
+    Z = f4(w1,wheelCarrierz) #[Z_min,Z_max]
+    return (Z,W,check)
+  end
 end
 
 function F(x)
   n = 200
   (pointWC, pointList) = f1(x,n)
-  (pointWC,w1,L,wheelCarrierz) = f2(pointWC, pointList)
+  (pointWC,w1,L,wheelCarrierz,check) = f2(pointWC, pointList)
   W = f3(pointWC,w1,L) #wheelRate
   Z = f4(w1,wheelCarrierz) #[Z_min,Z_max]
   F = W - (0.2 * Z + 28)
