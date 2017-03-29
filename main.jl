@@ -2,57 +2,53 @@ workspace()
 using PyPlot
 include("./MyModule.jl")
 using MyModule
-include("./f.jl")
 using ForwardDiff
-# X0 = x
-n = 200
-caFront       = [2260 220 290] #1
-caRear        = [1890 250 290] #2
-wheelCarrier  = [2110 520 320] #3
-push          = [2110 245 600] #4
-chassis       = [2110 200 535] #5
-rockerAxis    = [2115 200 535] #6
-shockA        = [2110 200 595] #7
-shockB        = [2110 30  575]  #8
 
-travel = 51                    #9
-springRate = 61.3              #10
 
-x = zeros(26)
-x[1:3] = caFront
-x[4:6] = caRear
-x[7:9] = wheelCarrier
-x[10:12] = push
-x[13:15] = chassis
-x[16:18] = rockerAxis
-x[19:21] = shockA
-x[22:24] = shockB
-x[25] = travel
-x[26] = springRate
-#=
-pointList = [caFront;     # 1
-            caRear;       # 2
-            wheelCarrier; # 4
-            push;         # 5
-            chassis;      # 6
-            rockerAxis;   # 7
-            shockA;       # 8
-            shockB]       # 9
 
-plot_pointList(pointList)
-=#
+# Les points d'entrée du datum de suspension
+caFront       = [2260 220 290] #1 - Immobile
+caRear        = [1890 250 290] #2 - Immobile
+wheelCarrier  = [2110 520 320] #3 - Immobile
+push          = [2110 245 600] #4 - Variable
+chassis       = [2110 200 535] #5 - Variable
+rockerAxis    = [2115 200 535] #6 - Variable
+shockA        = [2110 200 595] #7 - Variable
+shockB        = [2110  30 575] #8 - Variable
 
-(z,wheelRate,check) = WZ(x)
+# 4,5,7 devraient être dans le même plan, potentiellement. Et 6 devrait être normal à ce plan. Bon, ce n'est pas nécessaire, mais ça facilite la fabrication.
 
-if check == true
-  error("Le point de départ n'est pas valide !")
+travel = 51                    #9 - Immobile
+springRate = 61.3              #10 - Immobile
+
+# Nombre de points de la discrétisation
+n = 100
+# Variables de départs, x_0
+x = zeros(15)
+x[1:3] = push
+x[4:6] = chassis
+x[7:9] = rockerAxis
+x[10:12] = shockA
+x[13:15] = shockB
+# Paramètres du modèle, Q
+Q = zeros(11)
+Q[1:3] = caFront
+Q[4:6] = caRear
+Q[7:9] = wheelCarrier
+Q[10] = travel
+Q[11] = springRate
+
+(pointWC,pointList) = transGeo(x,Q,n)
+(wheelRate,check) = fwheelRate(pointWC,pointList,Q[11])
+# Fonction objectif F
+if check == false
+  fonctionObjectif = F(x,Q,n)
+  else
+    error("Le point de départ n'est pas valide !")
 end
 
-#plot(z,wheelRate)
-#gui()
-
 cfg = ForwardDiff.JacobianConfig(x)
-Jf = zeros(n-1,26)
+Jf = zeros(n-1,15)
 ForwardDiff.jacobian!(Jf, F, x, cfg)
 
 grad = Jf'*F(x)
