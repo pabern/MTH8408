@@ -1,64 +1,53 @@
-workspace()
-using PyPlot
-include("./MyModule.jl")
-using MyModule
-include("./f.jl")
 using ForwardDiff
-# X0 = x
-n = 200
-caFront       = [2260 220 290] #1
-caRear        = [1890 250 290] #2
-wheelCarrier  = [2110 520 320] #3
-push          = [2110 245 600] #4
-chassis       = [2110 200 535] #5
-rockerAxis    = [2115 200 535] #6
-shockA        = [2110 200 595] #7
-shockB        = [2110 30  575]  #8
+# using PyPlot
+include("./ini.jl")
 
-travel = 51                    #9
-springRate = 61.3              #10
+# Les points d'entrée du datum de suspension
+caFront       = [2260 220 290] #1 - Immobile
+caRear        = [1890 250 290] #2 - Immobile
+wheelCarrier  = [2110 520 320] #3 - Immobile
+push          = [2110 245 600] #4 - Variable
+chassis       = [2110 200 535] #5 - Variable
+rockerAxis    = [2115 200 535] #6 - Variable
+shockA        = [2110 200 595] #7 - Variable
+shockB        = [2110  30 575] #8 - Variable
 
-x = zeros(26)
-x[1:3] = caFront
-x[4:6] = caRear
-x[7:9] = wheelCarrier
-x[10:12] = push
-x[13:15] = chassis
-x[16:18] = rockerAxis
-x[19:21] = shockA
-x[22:24] = shockB
-x[25] = travel
-x[26] = springRate
-#=
-pointList = [caFront;     # 1
-            caRear;       # 2
-            wheelCarrier; # 4
-            push;         # 5
-            chassis;      # 6
-            rockerAxis;   # 7
-            shockA;       # 8
-            shockB]       # 9
+# 4,5,7 devraient être dans le même plan, potentiellement. Et 6 devrait être normal à ce plan. Bon, ce n'est pas nécessaire, mais ça facilite la fabrication.
 
-plot_pointList(pointList)
-=#
+travel = 51                    #9 - Immobile
+springRate = 61.3              #10 - Immobile
 
-(z,wheelRate,check) = WZ(x)
+# Nombre de points de la discrétisation
+global n = 100
+# Variables de départs, x_0
+x = zeros(15)
+x[1:3] = push
+x[4:6] = chassis
+x[7:9] = rockerAxis
+x[10:12] = shockA
+x[13:15] = shockB
+# Paramètres du modèle, Q
+global Q = zeros(11)
+Q[1:3] = caFront
+Q[4:6] = caRear
+Q[7:9] = wheelCarrier
+Q[10] = travel
+Q[11] = springRate
 
-if check == true
-  error("Le point de départ n'est pas valide !")
+(wheelRate,check) = wheelrate(x)
+# Fonction objectif F
+if check == false
+  fObj = F(x)
+  else
+    error("Le point de départ n'est pas valide !")
 end
 
-#plot(z,wheelRate)
-#gui()
+Jf = jacobien(x)
 
-cfg = ForwardDiff.JacobianConfig(x)
-Jf = zeros(n-1,26)
-ForwardDiff.jacobian!(Jf, F, x, cfg)
-
-grad = Jf'*F(x)
+grad = Jf'*fObj
 gradNorm0 = norm(grad)
 gradNorm = gradNorm0
-fk = 0.5 * norm(F(x))# Valeur de la fonction en x_0
+fk = 0.5 * norm(fObj) # Valeur de la fonction en x_0
 f0 = fk
 
 k = 0
@@ -70,7 +59,7 @@ while k < 200 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
   check = true
   while check == true # On valide si la fonction est réalisable
     x2 = x + (t*d)
-    (z,wheelRate,check) = WZ(x2)
+    (wheelRate,check) = wheelrate(x2)
     if check == true
       t /= 1.5
       continue
@@ -83,17 +72,16 @@ while k < 200 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
   end # End While check == true
 
   x += (t*d)
-  cfg = ForwardDiff.JacobianConfig(x)
-  Jf = zeros(n-1,26)
-  ForwardDiff.jacobian!(Jf, F, x, cfg)
+  Jf = jacobien(x)
+  fObj = F(x)
 
-  grad = Jf'*F(x)
+  grad = Jf'*fObj
   gradNorm = norm(grad)
-  fk = 0.5 * norm(F(x))
+  fk = 0.5 * norm(fObj)
   k += 1 # Next iteration
   @printf "%2d " k
   @printf "%9.2e " fk
-  @printf "%7.1e " gradNorm
-  @printf "%7.1e\n" t
+  @printf "%10.4e " gradNorm
+  @printf "%10.4e\n" t
 
 end # end while
