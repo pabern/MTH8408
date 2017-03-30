@@ -1,10 +1,6 @@
-workspace()
-using PyPlot
-include("./MyModule.jl")
-using MyModule
 using ForwardDiff
-
-
+# using PyPlot
+include("./ini.jl")
 
 # Les points d'entrée du datum de suspension
 caFront       = [2260 220 290] #1 - Immobile
@@ -22,7 +18,7 @@ travel = 51                    #9 - Immobile
 springRate = 61.3              #10 - Immobile
 
 # Nombre de points de la discrétisation
-n = 100
+global n = 100
 # Variables de départs, x_0
 x = zeros(15)
 x[1:3] = push
@@ -31,30 +27,27 @@ x[7:9] = rockerAxis
 x[10:12] = shockA
 x[13:15] = shockB
 # Paramètres du modèle, Q
-Q = zeros(11)
+global Q = zeros(11)
 Q[1:3] = caFront
 Q[4:6] = caRear
 Q[7:9] = wheelCarrier
 Q[10] = travel
 Q[11] = springRate
 
-(pointWC,pointList) = transGeo(x,Q,n)
-(wheelRate,check) = fwheelRate(pointWC,pointList,Q[11])
+(wheelRate,check) = wheelrate(x)
 # Fonction objectif F
 if check == false
-  fonctionObjectif = F(x,Q,n)
+  fObj = F(x)
   else
     error("Le point de départ n'est pas valide !")
 end
 
-cfg = ForwardDiff.JacobianConfig(x)
-Jf = zeros(n-1,15)
-ForwardDiff.jacobian!(Jf, F, x, cfg)
+Jf = jacobien(x)
 
-grad = Jf'*F(x)
+grad = Jf'*fObj
 gradNorm0 = norm(grad)
 gradNorm = gradNorm0
-fk = 0.5 * norm(F(x))# Valeur de la fonction en x_0
+fk = 0.5 * norm(fObj) # Valeur de la fonction en x_0
 f0 = fk
 
 k = 0
@@ -66,7 +59,7 @@ while k < 200 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
   check = true
   while check == true # On valide si la fonction est réalisable
     x2 = x + (t*d)
-    (z,wheelRate,check) = WZ(x2)
+    (wheelRate,check) = wheelrate(x2)
     if check == true
       t /= 1.5
       continue
@@ -79,17 +72,16 @@ while k < 200 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
   end # End While check == true
 
   x += (t*d)
-  cfg = ForwardDiff.JacobianConfig(x)
-  Jf = zeros(n-1,26)
-  ForwardDiff.jacobian!(Jf, F, x, cfg)
+  Jf = jacobien(x)
+  fObj = F(x)
 
-  grad = Jf'*F(x)
+  grad = Jf'*fObj
   gradNorm = norm(grad)
-  fk = 0.5 * norm(F(x))
+  fk = 0.5 * norm(fObj)
   k += 1 # Next iteration
   @printf "%2d " k
   @printf "%9.2e " fk
-  @printf "%7.1e " gradNorm
-  @printf "%7.1e\n" t
+  @printf "%10.4e " gradNorm
+  @printf "%10.4e\n" t
 
 end # end while
