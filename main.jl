@@ -1,5 +1,5 @@
 include("./ini.jl")
-
+#using PyPlot
 
 caFront       = [2260 220 290] #1 - Immobile
 caRear        = [1890 250 290] #2 - Immobile
@@ -30,19 +30,29 @@ Q[4:6] = caRear
 Q[7:9] = wheelCarrier
 Q[10] = travel
 Q[11] = springRate
-
-F(x)
+Z = -Q[10] *ones(1,n-1) + (2*Q[10])/(n-2) * (0:(n-2))'
+F(x0)
 
 using NLPModels
 
 # Constraint (rockerAxis - chassis) orthogonal to the rocker plane
-constraints = x-> [(x[4:6]-x[7:9])'*(x[4:6]-x[1:3]);(x[4:6]-x[7:9])'*(x[4:6]-x[10:12])]
-r = 1 # Eloignement maximal du point initial
-nlp = ADNLPModel(x->F(x), x0, lvar=x0-r, uvar=x0+r,
-                 c=constraints, lcon=[0.0;0.0], ucon=[0.0;0.0])
-
-
+# constraints = x-> [(x[4:6]-x[7:9])'*(x[4:6]-x[1:3]);(x[4:6]-x[7:9])'*(x[4:6]-x[10:12])]
+r = 50 # Eloignement maximal du point initial
+nlp = ADNLPModel(x->F(x), x0, lvar=x0-r, uvar=x0+r)
 
 using Ipopt
-model = NLPtoMPB(nlp, IpoptSolver( limited_memory_update_type="bfgs"))
+# Setting Ipopt Solver with time_limit
+model = NLPtoMPB(nlp, IpoptSolver( limited_memory_update_type="bfgs",max_cpu_time=40.0))
+# Solving problem :
 MathProgBase.optimize!(model)
+MathProgBase.status(model)
+# Taking solution :
+xfinal = MathProgBase.getsolution(model)
+
+# Comparing with the initial solution :
+F(xfinal)
+wr0 = wheelrate(x0)
+plot(Z',wr0)
+plot(Z',0.2*Z'+28)
+wrfinal = wheelrate(xfinal)
+plot(Z',wrfinal)

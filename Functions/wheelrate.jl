@@ -24,7 +24,7 @@ function wheelrate(x)
   rockerAxis;   # 7
   shockA;       # 8
   shockB]       # 9
-
+  pointList[7,:] = find_rockerAxis(chassis,push,shockA)
   #  plot_pointList(pointList)
 
   # Translation of Origin (0 0 0) to chassis
@@ -81,37 +81,31 @@ function wheelrate(x)
   C = (rWC.^2 + a[3]^2 - a[2]^2)./(2*rWC*a[3])
   delta = A.^2 + B.^2 - C.^2
 
-  if any(d->d < 0 ,delta)
-    check = true
-    return (0,check)
-  else
-    check = false
-    ϕPush = 2*atan((A-sqrt(delta))./(B+C))
+  ϕPush = 2*atan((A-sqrt(delta))./(B+C))
 
-    t = cart2spher(push)
-    ϕIni = t[3]
+  t = cart2spher(push)
+  ϕIni = t[3]
 
-    # Rocker position after rotation
-    pushIni = rotate3d(push,chassis,[0 1 0],ϕIni)
-    shockAIni = rotate3d(shockA,chassis,[0 1 0],ϕIni)
+  # Rocker position after rotation
+  pushIni = rotate3d(push,chassis,[0 1 0],ϕIni)
+  shockAIni = rotate3d(shockA,chassis,[0 1 0],ϕIni)
 
-    shockA = rotate3d_tlist(shockAIni,chassis,[0 -1 0],ϕPush)
+  shockA = rotate3d_tlist(shockAIni,chassis,[0 -1 0],ϕPush)
 
-    # Lenght of shock
-    L = sqrt((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
+  # Lenght of shock
+  L = sqrt((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
 
-    # Wheel travel
-    w1 = pointWC[1:end-1,3]
-    w2 = pointWC[2:end,3]
-    wheelTravel = abs(w2-w1)
+  # Wheel travel
+  w1 = pointWC[1:end-1,3]
+  w2 = pointWC[2:end,3]
+  wheelTravel = abs(w2-w1)
 
-    # Spring travel
-    v1 = L[1:end-1]
-    v2 = L[2:end]
-    springTravel = abs(v2-v1)
+  # Spring travel
+  v1 = L[1:end-1]
+  v2 = L[2:end]
+  springTravel = abs(v2-v1)
 
-    motionRatio = wheelTravel./springTravel
-    wheelRate = springRate./(motionRatio.^2)
-    return (wheelRate,check)
-  end
+  motionRatio = wheelTravel./springTravel
+  wheelRate = springRate./(motionRatio.^2)
+  return wheelRate
 end
