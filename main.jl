@@ -1,8 +1,6 @@
-using ForwardDiff
-# using PyPlot
 include("./ini.jl")
 
-# Les points d'entrée du datum de suspension
+
 caFront       = [2260 220 290] #1 - Immobile
 caRear        = [1890 250 290] #2 - Immobile
 wheelCarrier  = [2110 520 320] #3 - Immobile
@@ -12,20 +10,19 @@ rockerAxis    = [2115 200 535] #6 - Variable
 shockA        = [2110 200 595] #7 - Variable
 shockB        = [2110  30 575] #8 - Variable
 
-# 4,5,7 devraient être dans le même plan, potentiellement. Et 6 devrait être normal à ce plan. Bon, ce n'est pas nécessaire, mais ça facilite la fabrication.
-
 travel = 51                    #9 - Immobile
 springRate = 61.3              #10 - Immobile
+
 
 # Nombre de points de la discrétisation
 global n = 100
 # Variables de départs, x_0
-x = zeros(15)
-x[1:3] = push
-x[4:6] = chassis
-x[7:9] = rockerAxis
-x[10:12] = shockA
-x[13:15] = shockB
+x0 = zeros(15)
+x0[1:3] = push
+x0[4:6] = chassis
+x0[7:9] = rockerAxis
+x0[10:12] = shockA
+x0[13:15] = shockB
 # Paramètres du modèle, Q
 global Q = zeros(11)
 Q[1:3] = caFront
@@ -34,54 +31,18 @@ Q[7:9] = wheelCarrier
 Q[10] = travel
 Q[11] = springRate
 
-(wheelRate,check) = wheelrate(x)
-# Fonction objectif F
-if check == false
-  fObj = F(x)
-  else
-    error("Le point de départ n'est pas valide !")
-end
+F(x)
 
-Jf = jacobien(x)
+using NLPModels
 
-grad = Jf'*fObj
-gradNorm0 = norm(grad)
-gradNorm = gradNorm0
-fk = 0.5 * norm(fObj) # Valeur de la fonction en x_0
-f0 = fk
+# Constraint (rockerAxis - chassis) orthogonal to the rocker plane
+constraints = x-> [(x[4:6]-x[7:9])'*(x[4:6]-x[1:3]);(x[4:6]-x[7:9])'*(x[4:6]-x[10:12])]
+r = 1 # Eloignement maximal du point initial
+nlp = ADNLPModel(x->F(x), x0, lvar=x0-r, uvar=x0+r,
+                 c=constraints, lcon=[0.0;0.0], ucon=[0.0;0.0])
 
-k = 0
-a = 10e-4
-while k < 200 && gradNorm > 1.0e-6 * gradNorm0  # stopping conditions
-  d = -grad
-  slope = dot(grad,d) # Valeur de la descente
-  t = 1
-  check = true
-  while check == true # On valide si la fonction est réalisable
-    x2 = x + (t*d)
-    (wheelRate,check) = wheelrate(x2)
-    if check == true
-      t /= 1.5
-      continue
-    end
-    if 0.5 * norm(F(x2)) > fk + (a*t*slope)
-      t /= 1.5
-      check = true
-      continue
-    end
-  end # End While check == true
 
-  x += (t*d)
-  Jf = jacobien(x)
-  fObj = F(x)
 
-  grad = Jf'*fObj
-  gradNorm = norm(grad)
-  fk = 0.5 * norm(fObj)
-  k += 1 # Next iteration
-  @printf "%2d " k
-  @printf "%9.2e " fk
-  @printf "%10.4e " gradNorm
-  @printf "%10.4e\n" t
-
-end # end while
+using Ipopt
+model = NLPtoMPB(nlp, IpoptSolver( limited_memory_update_type="bfgs"))
+MathProgBase.optimize!(model)
