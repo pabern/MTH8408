@@ -42,7 +42,8 @@ nlp = ADNLPModel(x->F(x), x0, lvar=x0-r, uvar=x0+r)
 
 using Ipopt
 # Setting Ipopt Solver with time_limit
-model = NLPtoMPB(nlp, IpoptSolver( limited_memory_update_type="bfgs",max_cpu_time=40.0))
+model = NLPtoMPB(nlp, IpoptSolver( limited_memory_update_type="bfgs",
+                                  max_cpu_time=200.0,max_iter=15))
 # Solving problem :
 MathProgBase.optimize!(model)
 MathProgBase.status(model)
