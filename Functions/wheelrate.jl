@@ -1,3 +1,9 @@
+#= -------------------------------------------------------------------------------------------------
+Fonction wheelrate(x)
+Calcule le wheel rate en fonction des points d'entrée
+x =: [12,1]
+wheelrate =: Vecteur wheelrate
+--------------------------------------------------------------------------------------------------=#
 function wheelrate(x)
   # Rappel que x sont variables et Q et n sont des paramètres
   caFront       = Q[1:3]' #1
@@ -5,55 +11,48 @@ function wheelrate(x)
   wheelCarrier  = Q[7:9]' #3
   push          = x[1:3]' #4
   chassis       = x[4:6]' #5
-  rockerAxis    = x[7:9]' #6
-  shockA        = x[10:12]' #7
-  shockB        = x[13:15]'  #8
-  travel = Q[10]                 #9
-  springRate = Q[11]             #10
+  shockA        = x[7:9]' #6
+  shockB        = x[10:12]'#7
+  travel = Q[10]                 #8
+  springRate = Q[11]             #9
 
-  # Identify point of rotation of wheelCarrier around caAxis
+  # Identification du point de rotation de wheelCarrier autour de caAxis
   WCRot = findclosepoint(caFront, caRear, wheelCarrier)
 
-  # Create the list to manipulate
+  # Céation d'une liste de points à manipuler
   pointList = [caFront;     # 1
-  caRear;       # 2
-  WCRot;        # 3
-  wheelCarrier; # 4
-  push;         # 5
-  chassis;      # 6
-  rockerAxis;   # 7
-  shockA;       # 8
-  shockB]       # 9
+              caRear;       # 2
+              WCRot;        # 3
+              wheelCarrier; # 4
+              push;         # 5
+              chassis;      # 6
+              find_rockerAxis(chassis,push,shockA); # 7
+              shockA;       # 8
+              shockB]       # 9
 
-  #  plot_pointList(pointList)
+  # Translation de l'origine (0 0 0) au point chassis
+  pointList = translate3D(pointList,pointList[6,:])
 
-  # Translation of Origin (0 0 0) to chassis
-  pointList = translate3d(pointList,pointList[6,:])
-  #  plot_pointList(pointList)
-
-  # Z axis rotation to eliminate θ in spherical coordinate
+  # Rotation autour de l'axe des Z pour amener éliminer un degré de liberté
   t = cart2spher(pointList[7,:])
   angleRot = (π/2) - t[2]
-  pointList = rotate3d(pointList,[0 0 0], [0 0 1], angleRot)
-  #  plot_pointList(pointList)
+  pointList = rotate3D(pointList,[0 0 0], [0 0 1], angleRot)
 
-  # Y axis rotation to only leave ϕ as a variable in spherical coordinate
+  # Rotation autour de l'axe des Y afin qu'il ne reste qu'un degré de liberté, soit la rotation en X
   t = cart2spher(pointList[7,:])
   angleRot = (π/2) - t[3]
-  pointList = rotate3d(pointList,[0 0 0], [0 1 0], angleRot)
-  #  plot_pointList(pointList)
+  pointList = rotate3D(pointList,[0 0 0], [0 1 0], angleRot)
 
-  # Calculate the points of the wheel carrier after its rotation according to the desired travel
-  # Translation to the origin in order for the rotation to function correctly
-  pointListWC = translate3d(pointList,pointList[3,:])
+  # Calcul des points du mouvement incémental de wheelCarrier dans l'espace
+  pointListWC = translate3D(pointList,pointList[3,:])
 
   rotationTravel = atan(travel/(norm(WCRot-wheelCarrier)))
   rotationTravel = -rotationTravel *ones(1,n) + (2*rotationTravel)/n * (0:(n-1))'
 
-  pointWCtemp = rotate3d_tlist(pointListWC[4:4,:], pointListWC[1:1,:], pointListWC[2:2,:], rotationTravel')
-  pointWC = translate3d(pointWCtemp, -pointList[3:3,:]')
-
-  # Point re-establishment
+  pointWCtemp = rotate3D_tlist(pointListWC[4:4,:], pointListWC[1:1,:], pointListWC[2:2,:], rotationTravel')
+  pointWC = translate3D(pointWCtemp, -pointList[3:3,:]')
+display(pointWC)
+  # Séparation des points de travail
   caFront       = pointList[1:1,:]
   caRear        = pointList[2:2,:]
   WCRot         = pointList[3:3,:]
@@ -64,54 +63,47 @@ function wheelrate(x)
   shockA        = pointList[8:8,:]
   shockB        = pointList[9:9,:]
 
-  springRate = Q[11]
-
-  # Sherical coordinates of wheel carrier positions
+  # Transfert des points de wheelCarrier en sphérique pour le calcul selon Hartenbeg
   sphericWC = cart2spher_list(pointWC)
 
   rWC = sphericWC[:,1]
   θWC = sphericWC[:,2]
   ϕWC = sphericWC[:,3]
-  # Four bar linkage length of members
+
+  # Longueur des 4 membrures de l'équation
   a = [norm(WCRot-wheelCarrier) norm(push-wheelCarrier) norm(push-chassis) norm(chassis-WCRot)]
 
-  # Four bar linkage equation
+  # Résolution de l'équation à 4 membrures selon une modification de la méthode algébrique d'Hartenberg
   A = sin(θWC).*sin(ϕWC)
   B = cos(ϕWC)
   C = (rWC.^2 + a[3]^2 - a[2]^2)./(2*rWC*a[3])
   delta = A.^2 + B.^2 - C.^2
 
-  if any(d->d < 0 ,delta)
-    check = true
-    return (0,check)
-  else
-    check = false
-    ϕPush = 2*atan((A-sqrt(delta))./(B+C))
+  ϕPush = 2*atan((A-sqrt(delta))./(B+C))
 
-    t = cart2spher(push)
-    ϕIni = t[3]
+  # Calcul de la position du rocker suite à la rotation
+  t = cart2spher(push)
+  ϕIni = t[3]
+  pushIni = rotate3d(push,chassis,[0 1 0],ϕIni)
+  shockAIni = rotate3d(shockA,chassis,[0 1 0],ϕIni)
 
-    # Rocker position after rotation
-    pushIni = rotate3d(push,chassis,[0 1 0],ϕIni)
-    shockAIni = rotate3d(shockA,chassis,[0 1 0],ϕIni)
+  shockA = rotate3d_tlist(shockAIni,chassis,[0 -1 0],ϕPush)
 
-    shockA = rotate3d_tlist(shockAIni,chassis,[0 -1 0],ϕPush)
+  # Calcul de la longueur du shock
+  L = sqrt((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
 
-    # Lenght of shock
-    L = sqrt((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
+  # Calcul du déplacement incrémental de la roue
+  w1 = pointWC[1:end-1,3]
+  w2 = pointWC[2:end,3]
+  wheelTravel = abs(w2-w1)
 
-    # Wheel travel
-    w1 = pointWC[1:end-1,3]
-    w2 = pointWC[2:end,3]
-    wheelTravel = abs(w2-w1)
+  # Calcul du déplacement incrémental du shock
+  v1 = L[1:end-1]
+  v2 = L[2:end]
+  springTravel = abs(v2-v1)
 
-    # Spring travel
-    v1 = L[1:end-1]
-    v2 = L[2:end]
-    springTravel = abs(v2-v1)
-
-    motionRatio = wheelTravel./springTravel
-    wheelRate = springRate./(motionRatio.^2)
-    return (wheelRate,check)
-  end
+  # Calcul du motion ratio et du wheel rate
+  motionRatio = wheelTravel./springTravel
+  wheelRate = springRate./(motionRatio.^2)
+  return wheelRate
 end

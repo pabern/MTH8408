@@ -1,4 +1,11 @@
-function rotate3d_tlist(P, Q1, Q2, t)
+#= -------------------------------------------------------------------------------------------------
+Fonction rotate3D(P, Q1, Q2, t)
+Rotation d'un point autour d'un axe quelconque dans l'espace 3D
+P =: Liste de points sur lesquels la rotation est faite
+Q1 =: Point 1 de l'axe quelconque u
+Q2 =: Point 2 de l'axe quelconque u
+t =: Angle de rotation
+--------------------------------------------------------------------------------------------------=#function rotate3D_tlist(P, Q1, Q2, t)
   n = length(t)
   u = unitvector(Q1, Q2)
   c = cos(t)'

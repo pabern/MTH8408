@@ -1,4 +1,12 @@
-function rotate3d(P, Q1, Q2, t)
+#= -------------------------------------------------------------------------------------------------
+Fonction rotate3D(P, Q1, Q2, t)
+Rotation d'un point autour d'un axe quelconque dans l'espace 3D
+P =: Point sur lequel la rotation est faite
+Q1 =: Point 1 de l'axe quelconque u
+Q2 =: Point 2 de l'axe quelconque u
+t =: Angle de rotation
+--------------------------------------------------------------------------------------------------=#
+function rotate3D(P, Q1, Q2, t)
   u = unitvector(Q1, Q2)
   c = cos(t)
   s = sin(t)
@@ -14,6 +22,7 @@ function rotate3d(P, Q1, Q2, t)
   uxz = ux*uz
   uyz = uy*uz
 
+  # Matrice de rotation en 3D
   R = [c+(ux2*c1) (uxy*c1)-(uz*s) (uxz*c1)+(uy*s);
   (uxy*c1)+(uz*s) c+(uy2*c1) (uyz*c1)-(ux*s);
   (uxz*c1)-(uy*s) (uyz*c1)+(ux*s) c+(uz2*c1)]
