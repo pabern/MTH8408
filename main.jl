@@ -1,15 +1,14 @@
-#= -------------------------------------------------------------------------------------------------
+#= -----------------------------------------------------------------------------
 MTH8408 - Project d'optimisation
 Optimisation du wheel rate d'une formule SAE
 Auteurs : Patrick Bernier, Hugo Chareyre
---------------------------------------------------------------------------------------------------=#
+------------------------------------------------------------------------------=#
 include("./ini.jl")
 #using PyPlot
 using NLPModels
 using Ipopt
-test = 0
 
-# Récupération des points de suspensions
+# Récupération des points de suspension
 caFront       = [2260 220 290] #1 - Immobile
 caRear        = [1890 250 290] #2 - Immobile
 wheelCarrier  = [2110 520 320] #3 - Immobile
@@ -41,7 +40,7 @@ Q[11] = springRate
 # Débattement en Z incrémental selon travel, le déplacement maximal en Z
 global Z = -Q[10] *ones(1,n-1) + (2*Q[10])/(n-2) * (0:(n-2))'
 
-# ------------------- Début de la section d'optimisation -------------------------------------------
+# ------------------- Début de la section d'optimisation -----------------------
 
 r = 50 # Eloignement maximal du point initial
 nlp = ADNLPModel(x->F(x), x0, lvar=x0-r, uvar=x0+r)
