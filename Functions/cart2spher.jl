@@ -1,3 +1,9 @@
+#= -------------------------------------------------------------------------------------------------
+Fonction cart2spher(P)
+Transformation d'un point cartésien en un point sphérique
+P =: Matrice de points [x,3]
+T =: Vecteur de translation [1,3]
+--------------------------------------------------------------------------------------------------=#
 function cart2spher(P)
   x = P[1]
   y = P[2]
