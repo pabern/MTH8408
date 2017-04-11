@@ -7,6 +7,7 @@ include("./ini.jl")
 #using PyPlot
 using NLPModels
 using Ipopt
+test = 0
 
 # Récupération des points de suspensions
 caFront       = [2260 220 290] #1 - Immobile
