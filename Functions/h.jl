@@ -1,10 +1,7 @@
-#= -------------------------------------------------------------------------------------------------
-Fonction wheelrate(x)
-Calcule le wheel rate en fonction des points d'entrée
-x =: [12,1]
-wheelrate =: Vecteur wheelrate
---------------------------------------------------------------------------------------------------=#
-function wheelrate(x)
+function h(x)
+  # Cette fonction nous permet d'imposer la réalité physique
+  # de notre modèle en ajoutant la contrainte h(x)>=0
+
   # Rappel que x sont variables et Q et n sont des paramètres
   caFront       = Q[1:3]' #1
   caRear        = Q[4:6]' #2
@@ -78,32 +75,5 @@ function wheelrate(x)
   B = cos(ϕWC)
   C = (rWC.^2 + a[3]^2 - a[2]^2)./(2*rWC*a[3])
   delta = A.^2 + B.^2 - C.^2
-
-  ϕPush = 2*atan((A-sqrt(delta))./(B+C))
-
-  # Calcul de la position du rocker suite à la rotation
-  t = cart2spher(push)
-  ϕIni = t[3]
-  pushIni = rotate3D(push,chassis,[0 1 0],ϕIni)
-  shockAIni = rotate3D(shockA,chassis,[0 1 0],ϕIni)
-
-  shockA = rotate3D_tlist(shockAIni,chassis,[0 -1 0],ϕPush)
-
-  # Calcul de la longueur du shock
-  L = sqrt((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
-
-  # Calcul du déplacement incrémental de la roue
-  w1 = pointWC[1:end-1,3]
-  w2 = pointWC[2:end,3]
-  wheelTravel = abs(w2-w1)
-
-  # Calcul du déplacement incrémental du shock
-  v1 = L[1:end-1]
-  v2 = L[2:end]
-  springTravel = abs(v2-v1)
-
-  # Calcul du motion ratio et du wheel rate
-  motionRatio = wheelTravel./springTravel
-  wheelRate = springRate./(motionRatio.^2)
-  return wheelRate
+  return delta
 end

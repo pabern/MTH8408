@@ -23,7 +23,7 @@ springRate = 61.3              #9 - Immobile
 
 
 # Nombre de points de la discrétisation
-global n = 100
+global n = 25
 # Variables de départs, x0
 x0 = zeros(12)
 x0[1:3] = push
@@ -41,13 +41,19 @@ Q[11] = springRate
 global Z = -Q[10] *ones(1,n-1) + (2*Q[10])/(n-2) * (0:(n-2))'
 
 # ------------------- Début de la section d'optimisation -----------------------
-
+h(x0)
 r = 50 # Eloignement maximal du point initial
-nlp = ADNLPModel(x->F(x), x0, lvar=x0-r, uvar=x0+r)
-
+#nlp = ADNLPModel(x->F(x), x0, lvar=x0-r, uvar=x0+r)
+global μ = 1e3
+cons = x-> h(x)
+nlp = ADNLPModel(x->F(x) + μ*sum(h(x).*(sign(h(x))-1)), x0, lvar=x0-r, uvar=x0+r)
+nlp = ADNLPModel(x->F(x), x0, lvar=x0-r, uvar=x0+r,
+                  c=x->h(x), lcon=zeros(n))
 
 # Initialisation de Ipopt avec approximation L-BFGS et limite de temps et d'itérations
-model = NLPtoMPB(nlp, IpoptSolver(hessian_approximation = "limited-memory", limited_memory_update_type="bfgs", max_cpu_time=200.0,max_iter=15))
+model = NLPtoMPB(nlp, IpoptSolver(hessian_approximation = "limited-memory",
+                                  limited_memory_update_type="bfgs",
+                                     max_cpu_time=500.0,max_iter=6))
 
 # Résolution
 MathProgBase.optimize!(model)
@@ -55,7 +61,7 @@ MathProgBase.status(model)
 # Récupération de la solution
 xfinal = MathProgBase.getsolution(model)
 
-#=
+
 # Comparing with the initial solution :
 F(xfinal)
 wr0 = wheelrate(x0)
@@ -63,4 +69,3 @@ plot(Z',wr0)
 plot(Z',0.2*Z'+28)
 wrfinal = wheelrate(xfinal)
 plot(Z',wrfinal)
-=#
