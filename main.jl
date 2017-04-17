@@ -7,19 +7,24 @@ include("./ini.jl")
 #using PyPlot
 using NLPModels
 using Ipopt
+using ExcelReaders
 
-# Récupération des points de suspension
-caFront       = [2260 220 290] #1 - Immobile
-caRear        = [1890 250 290] #2 - Immobile
-wheelCarrier  = [2110 520 320] #3 - Immobile
-push          = [2110 245 600] #4 - Variable
-chassis       = [2110 200 535] #5 - Variable
-shockA        = [2110 200 595] #6 - Variable
-shockB        = [2110  30 575] #7 - Variable
+# Il faut que le fichier soit à la même place que main.jl
+cd(dirname(Base.source_path()))
+# On lit ce qui est nécessaire
+data = readxl("Input.xlsx", "Sheet1!A1:D11")
+
+caFront       = [data[2,2] data[2,3] data[2,4]] #1 - Immobile
+caRear        = [data[3,2] data[3,3] data[3,4]] #2 - Immobile
+wheelCarrier  = [data[4,2] data[4,3] data[4,4]] #3 - Immobile
+push          = [data[5,2] data[5,3] data[5,4]] #4 - Variable
+chassis       = [data[6,2] data[6,3] data[6,4]] #5 - Variable
+shockA        = [data[7,2] data[7,3] data[7,4]] #6 - Variable
+shockB        = [data[8,2] data[8,3] data[8,4]] #7 - Variable
 
 # Récupération des paramètres de conception
-travel = 51                    #8 - Immobile
-springRate = 61.3              #9 - Immobile
+travel = data[10,2]                   #8 - Immobile
+springRate = data[11,2]              #9 - Immobile
 
 
 # Nombre de points de la discrétisation
