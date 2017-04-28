@@ -1,0 +1,72 @@
+=======================================
+             Trial License
+       (NOT FOR COMMERCIAL USE)
+         Artelys Knitro 10.2.1
+=======================================
+
+Knitro presolve eliminated 0 variables and 0 constraints.
+
+bar_feasible:            1
+bar_feasmodetol:         0
+ftol:                    1e-16
+hessopt:                 6
+honorbnds:               1
+maxtime_cpu:             300
+Knitro changing algorithm from AUTO to 1.
+Knitro changing bar_initpt from AUTO to 3.
+Knitro changing bar_murule from AUTO to 4.
+Knitro changing bar_penaltycons from AUTO to 1.
+Knitro changing bar_penaltyrule from AUTO to 2.
+Knitro changing bar_switchrule from AUTO to 2.
+Knitro changing linesearch from AUTO to 1.
+Knitro changing linsolver from AUTO to 2.
+
+Problem Characteristics                    ( Presolved)
+-----------------------
+Objective goal:  Minimize
+Number of variables:                    12 (        12)
+    bounded below:                       0 (         0)
+    bounded above:                       0 (         0)
+    bounded below and above:            12 (        12)
+    fixed:                               0 (         0)
+    free:                                0 (         0)
+Number of constraints:                  25 (        25)
+    linear equalities:                   0 (         0)
+    nonlinear equalities:                0 (         0)
+    linear inequalities:                 0 (         0)
+    nonlinear inequalities:             25 (        25)
+    range:                               0 (         0)
+Number of nonzeros in Jacobian:        300 (       300)
+Number of nonzeros in Hessian:           0 (         0)
+
+  Iter      Objective      FeasError   OptError    ||Step||    CGits 
+--------  --------------  ----------  ----------  ----------  -------
+       0    1.099149e+05   0.000e+00
+Starting feasible mode...
+      10    8.523510e+03   0.000e+00   1.484e+00   2.275e-02        0
+      20    9.617309e+01   0.000e+00   6.510e-02   3.169e+00        0
+      30    5.535041e+01   0.000e+00   1.072e-02   1.237e+00        0
+      40    2.491410e+01   0.000e+00   2.437e-02   5.097e+00        0
+      50    1.071608e+01   0.000e+00   5.002e-03   1.109e-01        0
+      60    4.070872e+00   0.000e+00   1.081e-02   3.941e-01        0
+      70    3.617166e+00   0.000e+00   3.903e-04   3.890e-02        5
+      80    3.594533e+00   0.000e+00   3.013e-04   9.704e-07        6
+      90    3.594533e+00   0.000e+00   3.013e-04   3.801e-12        5
+      91    3.594533e+00   0.000e+00   3.013e-04   8.315e-13        6
+
+EXIT: Primal feasible solution; terminate because the relative change in
+      solution estimate < xtol for 3 consecutive iterations.
+
+Final Statistics
+----------------
+Final objective value               =   3.59453302258850e+00
+Final feasibility error (abs / rel) =   0.00e+00 / 0.00e+00
+Final optimality error  (abs / rel) =   3.01e-04 / 3.01e-04
+# of iterations                     =         91 
+# of CG iterations                  =        202 
+# of function evaluations           =        495
+# of gradient evaluations           =         92
+Total program time (secs)           =       2.42760 (     4.272 CPU time)
+Time spent in evaluations (secs)    =       2.30270
+
+===============================================================================
