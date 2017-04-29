@@ -89,6 +89,18 @@ MathProgBase.status(model)
 # Récupération de la solution
 xfinal = MathProgBase.getsolution(model)
 
+# Affichage de la solution
+@printf "_______Solution_______\n"
+@printf "caFront \t %d  \t %d \t %d \n" Q[1] Q[2] Q[3]
+@printf "caRear \t\t %d  \t %d \t %d \n" Q[4] Q[5] Q[6]
+@printf "wheelCarrier \t %d  \t %d \t %d \n" Q[7] Q[8] Q[9]
+@printf "push \t\t %d  \t %d \t %d \n" xfinal[1] xfinal[2] xfinal[3]
+@printf "chassis \t %d  \t %d \t %d \n" xfinal[4] xfinal[5] xfinal[6]
+@printf "shockA \t\t %d  \t %d \t %d \n" xfinal[7] xfinal[7] xfinal[7]
+@printf "shockB \t\t %d  \t %d \t %d \n\n" xfinal[10] xfinal[11] xfinal[12]
+@printf "travel \t\t %d \n" Q[10]
+@printf "springRate \t %d \n\n" Q[11]
+
 # Comparaison avec la solution initial et idéale
 plot_solution(xfinal,x0, 0.05,1,500)
 # Vérification delta >> 0 :
