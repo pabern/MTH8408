@@ -78,7 +78,7 @@ function wheelrate(x)
   B = cos(ϕWC)
   C = (rWC.^2 + a[3]^2 - a[2]^2)./(2*rWC*a[3])
   delta = A.^2 + B.^2 - C.^2
-
+  delta = delta .* (1+sign(delta))/2
   ϕPush = 2*atan((A-sqrt(delta))./(B+C))
 
   # Calcul de la position du rocker suite à la rotation

@@ -1,4 +1,4 @@
-function L(x)
+function L1End(x)
   # Calcul la longueur entre les deux Shock (A et B) pour tous les points de la
   # discrétisation
   # Rappel que x sont variables et Q et n sont des paramètres
@@ -74,7 +74,7 @@ function L(x)
   B = cos(ϕWC)
   C = (rWC.^2 + a[3]^2 - a[2]^2)./(2*rWC*a[3])
   delta = A.^2 + B.^2 - C.^2
-
+  delta = delta .* (1+sign(delta))/2
   ϕPush = 2*atan((A-sqrt(delta))./(B+C))
 
   # Calcul de la position du rocker suite à la rotation
@@ -87,5 +87,5 @@ function L(x)
 
   # Calcul de la longueur du shock
   L = ((shockA[:,1] - shockB[1]).^2 + (shockA[:,2] - shockB[2]).^2 + (shockA[:,3] - shockB[3]).^2)
-  return L[1]
+  return [L[1], L[end]]
 end

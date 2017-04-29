@@ -27,6 +27,9 @@ shockB        = [data[8,2] data[8,3] data[8,4]] #7 - Variable
 travel = data[10,2]                   #8 - Immobile
 springRate = data[11,2]              #9 - Immobile
 
+# Bornes d'alongement maximal et minimal du shock
+Lₗ = 177
+Lᵤ = 267
 
 # Nombre de points de la discrétisation
 global n = 25
@@ -51,7 +54,7 @@ print("...Optimization module initialization\n")
 # Options KNITRO:
 # https://www.artelys.com/tools/knitro_doc/3_referenceManual/userOptions.html
 # Différentes options pour l'approximations des hessiens :
-HessianApprox = KTR_HESSOPT_EXACT
+HessianApprox = KTR_HESSOPT_LBFGS
 # KTR_HESSOPT_EXACT : Hessien exact
 # KTR_HESSOPT_BFGS : BFGS complet
 # KTR_HESSOPT_SR1  : SR1 (Symetric Rank 1)
@@ -59,25 +62,23 @@ HessianApprox = KTR_HESSOPT_EXACT
 # La résolution par L-BFGS s'avère être plus efficace en temp de calcul.
 # La résolution par hessien exact est plus longue, certainement à cause de
 # l'évaluation du hessien par ForwardDiff.
-
-r = 30 # Eloignement maximal du point initial
-lc = zeros(n+1)
-lc[(n+1):end] = 177^2
-uc = ones(n+1)
-uc[1:n]=KTR_INFBOUND
-uc[(n+1)] = 267^2
-L(x0)
-r = [5.0, 30, 30, 5, 30, 30, 5, 30, 30, 5, 30, 30]
-nlp = ADNLPModel(F, x0, lvar = x0-r, uvar= x0+r, c=x->append!(h(x),L1(x)), lcon=lc,ucon=uc)
-#nlp = ADNLPModel(F, x0, lvar = x0-r, uvar= x0+r, c=x->h(x), lcon=zeros(n))
+ftol = 1e-7
+fstopval = HessianApprox==KTR_HESSOPT_EXACT?15.0:KTR_INFBOUND
+# Définition des contraintes
+# (i) : Bornes sur les variables :
+r = [5, 30, 30, 5, 30, 30, 5, 30, 30, 5, 30, 30]
+# (ii) : L_l < L_i(x) < L_u
+nlp = ADNLPModel(F, x0, lvar = x0-r, uvar= x0+r, c=x->L1End(x),
+                  lcon=Lₗ^2*ones(2), ucon=Lᵤ^2*ones(2))
 
 
 solver = KnitroSolver(KTR_PARAM_HONORBNDS=KTR_HONORBNDS_ALWAYS,
                       KTR_PARAM_BAR_FEASIBLE=KTR_BAR_FEASIBLE_STAY,
-                      KTR_PARAM_BAR_FEASMODETOL=0.0,
+                      KTR_PARAM_BAR_FEASMODETOL=1e-10,
                       KTR_PARAM_HESSOPT= HessianApprox,
                       KTR_PARAM_MAXTIMECPU=300.0,
-                      KTR_PARAM_FTOL=1e-2)
+                      KTR_PARAM_FTOL=ftol,
+                      KTR_PARAM_FSTOPVAL = fstopval)
 
 model = NLPtoMPB(nlp, solver)
 
@@ -89,7 +90,11 @@ MathProgBase.status(model)
 xfinal = MathProgBase.getsolution(model)
 
 # Comparaison avec la solution initial et idéale
-plot_solution(xfinal,x0, 0.05,1,20)
+plot_solution(xfinal,x0, 0.05,1,500)
+# Vérification delta >> 0 :
+if sum(sign(h(xfinal- 1e-4))-1 )>0
+  print("... Warning : model may be out of the hypothesis A^2 + B^2 -C^2 >0 ")
+end
 
 # ------------------- Optimisation Stochastique -----------------------
 print("...Begining of robust optimization\n")
@@ -99,7 +104,7 @@ srand(1234)
 global K = 15
 σ = 1
 global epsilon = σ*randn(K,12)
-global η = 1/K
+global η = 5/K
 function Fstoch(x)
   fonctionObjectif = 0
   for i=1:K
@@ -113,14 +118,15 @@ end
 
 Fstoch(x0)
 # On réoptimise ici à partir de la solution obtenue précédemment
-r=10
-nlpStoch = ADNLPModel(Fstoch, xfinal, lvar = xfinal-r, uvar= xfinal+r, c=x->h(x), lcon=zeros(n))
+r2=1/2 * r
+nlpStoch = ADNLPModel(Fstoch, xfinal, lvar = xfinal-r2, uvar= xfinal+r2,
+                      c=x->L1End(x), lcon=Lₗ^2*ones(2), ucon=Lᵤ^2*ones(2))
 solver = KnitroSolver(KTR_PARAM_HONORBNDS=KTR_HONORBNDS_ALWAYS,
                       KTR_PARAM_BAR_FEASIBLE=KTR_BAR_FEASIBLE_STAY,
-                      KTR_PARAM_BAR_FEASMODETOL=0.0,
+                      KTR_PARAM_BAR_FEASMODETOL=1e-10,
                       KTR_PARAM_HESSOPT= HessianApprox,
                       KTR_PARAM_MAXTIMECPU=300.0,
-                      KTR_PARAM_FTOL=1e-8)
+                      KTR_PARAM_FTOL=ftol)
 modelStoch = NLPtoMPB(nlpStoch, solver)
 # Résolution
 MathProgBase.optimize!(modelStoch)
@@ -128,11 +134,11 @@ MathProgBase.status(modelStoch)
 # Récupération de la solution
 xfinalStoch = MathProgBase.getsolution(modelStoch)
 # Comparaison avec la solution initial et idéale
-plot_solution(xfinalStoch,x0, 0.05,1,2000,["xinitial.png","xfinalRobuste.png",
+plot_solution(xfinalStoch,x0, 0.05,1,500,["xinitial.png","xfinalRobuste.png",
               "3dSolutionRobuste.png"])
 
 # Affichage de la solution
-@printf "_______Solution_______"
+@printf "_______Solution_______\n"
 @printf "caFront \t %d  \t %d \t %d \n" Q[1] Q[2] Q[3]
 @printf "caRear \t\t %d  \t %d \t %d \n" Q[4] Q[5] Q[6]
 @printf "wheelCarrier \t %d  \t %d \t %d \n" Q[7] Q[8] Q[9]

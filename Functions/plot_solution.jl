@@ -55,4 +55,5 @@ function plot_solution(xfinal,x0, α=0.05, σ=1, K=500,fnames=["xinitial.png",
   ylabel("Y")
   zlabel("Z")
   savefig(fnames[3])
+
 end
