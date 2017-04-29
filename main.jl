@@ -61,7 +61,16 @@ HessianApprox = KTR_HESSOPT_EXACT
 # l'évaluation du hessien par ForwardDiff.
 
 r = 30 # Eloignement maximal du point initial
-nlp = ADNLPModel(F, x0, lvar = x0-r, uvar= x0+r, c=x->h(x), lcon=zeros(n))
+lc = zeros(n+1)
+lc[(n+1):end] = 177^2
+uc = ones(n+1)
+uc[1:n]=KTR_INFBOUND
+uc[(n+1)] = 267^2
+L(x0)
+r = [5.0, 30, 30, 5, 30, 30, 5, 30, 30, 5, 30, 30]
+nlp = ADNLPModel(F, x0, lvar = x0-r, uvar= x0+r, c=x->append!(h(x),L1(x)), lcon=lc,ucon=uc)
+#nlp = ADNLPModel(F, x0, lvar = x0-r, uvar= x0+r, c=x->h(x), lcon=zeros(n))
+
 
 solver = KnitroSolver(KTR_PARAM_HONORBNDS=KTR_HONORBNDS_ALWAYS,
                       KTR_PARAM_BAR_FEASIBLE=KTR_BAR_FEASIBLE_STAY,
@@ -71,6 +80,7 @@ solver = KnitroSolver(KTR_PARAM_HONORBNDS=KTR_HONORBNDS_ALWAYS,
                       KTR_PARAM_FTOL=1e-2)
 
 model = NLPtoMPB(nlp, solver)
+
 # Résolution
 print("...Begining of optimization\n")
 MathProgBase.optimize!(model)
@@ -79,8 +89,7 @@ MathProgBase.status(model)
 xfinal = MathProgBase.getsolution(model)
 
 # Comparaison avec la solution initial et idéale
-plot_solution(xfinal,x0, 0.05,1,2000)
-
+plot_solution(xfinal,x0, 0.05,1,20)
 
 # ------------------- Optimisation Stochastique -----------------------
 print("...Begining of robust optimization\n")
