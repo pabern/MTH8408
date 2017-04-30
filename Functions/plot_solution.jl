@@ -1,5 +1,5 @@
-function plot_solution(xfinal,x0, α=0.05, σ=1, K=500,fnames=["xinitial.png",
-                      "xfinal.png","3dsolution.png"])
+function plot_solution(xfinal,x0, α=0.05, σ=1, K=500,fnames=["1_xinitial.png",
+                      "2_xfinal.png","4_3dsolution.png"])
   #=
   xfinal : solution finale à tracer
   x0 : solution initiale

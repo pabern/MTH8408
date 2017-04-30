@@ -7,7 +7,9 @@ using PyPlot
 include("./ini.jl")
 using NLPModels
 using KNITRO
+using Ipopt
 using ExcelReaders
+
 
 print("...Loading Data\n")
 # Il faut que le fichier soit à la même place que main.jl
@@ -50,11 +52,23 @@ Q[11] = springRate
 global Z = -Q[10] *ones(1,n-1) + (2*Q[10])/(n-2) * (0:(n-2))'
 
 # ------------------- Début de la section d'optimisation -----------------------
-print("...Optimization module initialization\n")
+
+SolverToUse = "Knitro" #"Knitro" Ou "Ipopt", à choisir
+HessianApproxType = "L-BFGS" # "L-BFGS" Ou "Exact"
+print("...Using $(SolverToUse) solver with $(HessianApproxType) hessian
+      approximation\n")
 # Options KNITRO:
 # https://www.artelys.com/tools/knitro_doc/3_referenceManual/userOptions.html
 # Différentes options pour l'approximations des hessiens :
-HessianApprox = KTR_HESSOPT_LBFGS
+HessianApprox = (HessianApproxType=="L-BFGS" && SolverToUse == "Knitro" )?
+                  KTR_HESSOPT_LBFGS:
+                  (HessianApproxType=="Exact" && SolverToUse == "Knitro" )?
+                  KTR_HESSOPT_EXACT:
+                  (HessianApproxType=="L-BFGS" && SolverToUse == "Ipopt" )?
+                  "limited-memory":
+                  (HessianApproxType=="Exact" && SolverToUse == "Ipopt")?
+                  "exact":-1
+
 # KTR_HESSOPT_EXACT : Hessien exact
 # KTR_HESSOPT_BFGS : BFGS complet
 # KTR_HESSOPT_SR1  : SR1 (Symetric Rank 1)
@@ -68,17 +82,23 @@ fstopval = HessianApprox==KTR_HESSOPT_EXACT?15.0:KTR_INFBOUND
 # (i) : Bornes sur les variables :
 r = [5, 30, 30, 5, 30, 30, 5, 30, 30, 5, 30, 30]
 # (ii) : L_l < L_i(x) < L_u
+print("...Optimization module initialization\n")
 nlp = ADNLPModel(F, x0, lvar = x0-r, uvar= x0+r, c=x->L1End(x),
                   lcon=Lₗ^2*ones(2), ucon=Lᵤ^2*ones(2))
 
-
-solver = KnitroSolver(KTR_PARAM_HONORBNDS=KTR_HONORBNDS_ALWAYS,
-                      KTR_PARAM_BAR_FEASIBLE=KTR_BAR_FEASIBLE_STAY,
-                      KTR_PARAM_BAR_FEASMODETOL=1e-10,
-                      KTR_PARAM_HESSOPT= HessianApprox,
-                      KTR_PARAM_MAXTIMECPU=300.0,
-                      KTR_PARAM_FTOL=ftol,
-                      KTR_PARAM_FSTOPVAL = fstopval)
+if SolverToUse == "Ipopt"
+  solver = IpoptSolver(hessian_approximation = HessianApprox,
+                        limited_memory_update_type="bfgs",
+                        max_cpu_time=500.0,max_iter=500)
+elseif SolverToUse == "Knitro"
+  solver = KnitroSolver(KTR_PARAM_HONORBNDS=KTR_HONORBNDS_ALWAYS,
+                        KTR_PARAM_BAR_FEASIBLE=KTR_BAR_FEASIBLE_STAY,
+                        KTR_PARAM_BAR_FEASMODETOL=1e-10,
+                        KTR_PARAM_HESSOPT= HessianApprox,
+                        KTR_PARAM_MAXTIMECPU=500.0,
+                        KTR_PARAM_FTOL=ftol,
+                        KTR_PARAM_FSTOPVAL = fstopval)
+end
 
 model = NLPtoMPB(nlp, solver)
 
@@ -104,10 +124,9 @@ xfinal = MathProgBase.getsolution(model)
 # Comparaison avec la solution initial et idéale
 plot_solution(xfinal,x0, 0.05,1,500)
 # Vérification delta >> 0 :
-if sum(sign(h(xfinal- 1e-4))-1 )>0
+if sum(sign(h(xfinal)-1e-4)-1 )<0
   print("... Warning : model may be out of the hypothesis A^2 + B^2 -C^2 >0 ")
 end
-
 # ------------------- Optimisation Stochastique -----------------------
 print("...Begining of robust optimization\n")
 # Ici le modèle comprend dans sa valeur objectif une part de solutions
@@ -116,7 +135,7 @@ srand(1234)
 global K = 15
 σ = 1
 global epsilon = σ*randn(K,12)
-global η = 5/K
+global η = K/K
 function Fstoch(x)
   fonctionObjectif = 0
   for i=1:K
@@ -133,12 +152,6 @@ Fstoch(x0)
 r2=1/2 * r
 nlpStoch = ADNLPModel(Fstoch, xfinal, lvar = xfinal-r2, uvar= xfinal+r2,
                       c=x->L1End(x), lcon=Lₗ^2*ones(2), ucon=Lᵤ^2*ones(2))
-solver = KnitroSolver(KTR_PARAM_HONORBNDS=KTR_HONORBNDS_ALWAYS,
-                      KTR_PARAM_BAR_FEASIBLE=KTR_BAR_FEASIBLE_STAY,
-                      KTR_PARAM_BAR_FEASMODETOL=1e-10,
-                      KTR_PARAM_HESSOPT= HessianApprox,
-                      KTR_PARAM_MAXTIMECPU=300.0,
-                      KTR_PARAM_FTOL=ftol)
 modelStoch = NLPtoMPB(nlpStoch, solver)
 # Résolution
 MathProgBase.optimize!(modelStoch)
@@ -146,11 +159,11 @@ MathProgBase.status(modelStoch)
 # Récupération de la solution
 xfinalStoch = MathProgBase.getsolution(modelStoch)
 # Comparaison avec la solution initial et idéale
-plot_solution(xfinalStoch,x0, 0.05,1,500,["xinitial.png","xfinalRobuste.png",
-              "3dSolutionRobuste.png"])
+plot_solution(xfinalStoch,x0, 0.05,1,500,["1_xinitial.png","3_xfinalRobuste.png",
+              "5_3dSolutionRobuste.png"])
 
 # Affichage de la solution
-@printf "_______Solution_______\n"
+@printf "_______Solution Robuste_______\n"
 @printf "caFront \t %d  \t %d \t %d \n" Q[1] Q[2] Q[3]
 @printf "caRear \t\t %d  \t %d \t %d \n" Q[4] Q[5] Q[6]
 @printf "wheelCarrier \t %d  \t %d \t %d \n" Q[7] Q[8] Q[9]
